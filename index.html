@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Encontre a Saída · Labirinto</title>
+    <title>Encontre a Saída · Labirinto da Galinha</title>
     <style>
+        /* ========== ESTILOS GLOBAIS (JOGO ORIGINAL) ========== */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -34,6 +35,8 @@
             flex-direction: column;
             align-items: center;
             gap: min(20px, 4vw);
+            width: 100%;
+            height: 100%;
         }
         .active-screen {
             display: flex;
@@ -281,14 +284,463 @@
             justify-content: center;
             width: 100%;
         }
+
+        /* ===== NOVA TELA INICIAL COM ANIMAÇÃO DA GALINHA ===== */
+        #startScreen {
+            position: relative;
+            overflow: hidden;
+            background: transparent; /* o fundo vem dos elementos abaixo */
+            min-height: 500px;
+        }
+
+        /* Fundo de labirinto */
+        .labirinto-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(210, 180, 140, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(210, 180, 140, 0.2) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        /* Overlay escuro */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Paredes decorativas */
+        .parede {
+            position: absolute;
+            background: #8B5A2B;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            z-index: 1;
+        }
+        .parede1 { top: 10%; left: 8%; width: 180px; height: 25px; transform: rotate(20deg); }
+        .parede2 { bottom: 15%; right: 5%; width: 220px; height: 25px; transform: rotate(-10deg); }
+        .parede3 { top: 30%; right: 15%; width: 150px; height: 25px; transform: rotate(35deg); }
+        .parede4 { bottom: 25%; left: 12%; width: 200px; height: 25px; transform: rotate(-5deg); }
+
+        /* Container principal do título (para ficar acima) */
+        .start-content {
+            position: relative;
+            z-index: 20;
+            text-align: center;
+            background: rgba(255, 248, 220, 0.85);
+            padding: 2rem 4rem;
+            border-radius: 60px 60px 30px 30px;
+            border: 6px solid #A0522D;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 20px 30px rgba(0,0,0,0.6), inset 0 0 20px #F5DEB3;
+            max-width: 90%;
+            margin: 20px auto;
+        }
+        .start-content h1 {
+            font-size: clamp(2rem, 10vw, 3rem);
+            color: #5D3A1A;
+            text-shadow: 4px 4px 0 #F5DEB3, 6px 6px 0 rgba(0,0,0,0.2);
+            margin-bottom: 1rem;
+            letter-spacing: 4px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+        .start-content p {
+            font-size: 1.2rem;
+            color: #3D2B1A;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            background: rgba(255,255,200,0.3);
+            padding: 10px 20px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+        .start-content .botao-jogo {
+            background: #FF8C00;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 60px;
+            color: #2D1B0E;
+            border: 3px solid #F5DEB3;
+            box-shadow: 0 8px 0 #B45F06, 0 10px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: 0.1s ease;
+            text-transform: uppercase;
+        }
+        .start-content .botao-jogo:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 11px 0 #B45F06, 0 15px 20px rgba(0,0,0,0.3);
+        }
+        .start-content .botao-jogo:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #B45F06, 0 8px 12px rgba(0,0,0,0.3);
+        }
+
+        /* ===== GALINHA REALISTA EM CSS ===== */
+        .pista-corrida {
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .galinha-realista {
+            position: absolute;
+            width: 200px;
+            height: 180px;
+            animation: correr 10s linear infinite;
+            left: -250px;
+            filter: drop-shadow(0 15px 10px rgba(0,0,0,0.3));
+        }
+
+        .corpo {
+            position: absolute;
+            width: 130px;
+            height: 100px;
+            background: radial-gradient(circle at 30% 40%, #FFD700, #DAA520);
+            border-radius: 60% 40% 50% 30% / 60% 50% 40% 40%;
+            top: 30px;
+            left: 20px;
+            box-shadow: inset 5px 5px 10px #B8860B, inset -5px -2px 5px #FFE55C;
+            transform: rotate(2deg);
+            overflow: hidden;
+        }
+        .corpo::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,140,0,0.2) 8px, rgba(255,140,0,0.2) 12px);
+            border-radius: inherit;
+        }
+        .cabeca {
+            position: absolute;
+            width: 65px;
+            height: 60px;
+            background: radial-gradient(circle at 60% 40%, #FFD700, #CD853F);
+            border-radius: 50% 40% 40% 50%;
+            top: 5px;
+            left: 60px;
+            box-shadow: inset -2px -2px 5px #8B4513, inset 3px 3px 8px #FFE4B5;
+            z-index: 5;
+        }
+        .olho {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            top: 18px;
+            left: 30px;
+            box-shadow: 0 0 0 2px #8B4513;
+        }
+        .olho::after {
+            content: "";
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            box-shadow: 0 0 2px white;
+        }
+        .olho::before {
+            content: "";
+            position: absolute;
+            width: 3px;
+            height: 8px;
+            background: white;
+            border-radius: 40%;
+            top: 2px;
+            left: 8px;
+            transform: rotate(-15deg);
+            opacity: 0.8;
+        }
+        .crista {
+            position: absolute;
+            width: 30px;
+            height: 25px;
+            top: -12px;
+            left: 15px;
+            display: flex;
+            gap: 3px;
+        }
+        .crista span {
+            display: inline-block;
+            width: 8px;
+            height: 20px;
+            background: #FF4500;
+            border-radius: 40% 40% 0 0;
+            transform: rotate(-5deg);
+            box-shadow: 0 2px 3px #8B2500;
+        }
+        .crista span:nth-child(2) { height: 25px; }
+        .crista span:nth-child(3) { height: 18px; }
+        .bico {
+            position: absolute;
+            width: 20px;
+            height: 18px;
+            background: #FF8C00;
+            clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+            top: 25px;
+            left: 55px;
+            transform: rotate(5deg);
+            box-shadow: inset -1px -1px 2px #8B4500;
+            z-index: 6;
+        }
+        .barbela {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #FF6347;
+            border-radius: 50%;
+            top: 38px;
+            left: 45px;
+            filter: blur(1px);
+            opacity: 0.7;
+        }
+        .asa {
+            position: absolute;
+            width: 55px;
+            height: 40px;
+            background: linear-gradient(145deg, #DAA520, #B8860B);
+            border-radius: 60% 20% 50% 30%;
+            top: 45px;
+            left: 10px;
+            transform-origin: top right;
+            animation: baterAsa 0.4s infinite alternate ease-in-out;
+            box-shadow: inset -3px -2px 5px #8B4513, 2px 5px 8px rgba(0,0,0,0.2);
+            z-index: 4;
+        }
+        .asa::after {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 20px;
+            background: repeating-linear-gradient(45deg, #CD853F, #CD853F 3px, #DAA520 3px, #DAA520 6px);
+            border-radius: 40%;
+            top: 8px;
+            left: 10px;
+            opacity: 0.5;
+        }
+        .perna-esquerda, .perna-direita {
+            position: absolute;
+            width: 15px;
+            height: 45px;
+            background: linear-gradient(90deg, #CD853F, #8B4513);
+            bottom: 5px;
+            border-radius: 20% 20% 40% 40%;
+            transform-origin: top center;
+            animation: correrPernas 0.3s infinite alternate;
+            box-shadow: inset -1px -1px 3px #5D3A1A;
+        }
+        .perna-esquerda {
+            left: 55px;
+            animation-delay: -0.15s;
+        }
+        .perna-direita {
+            left: 85px;
+        }
+        .perna-esquerda::before, .perna-direita::before {
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 18px;
+            background: #CD853F;
+            border-radius: 40% 40% 20% 20%;
+            top: -12px;
+            left: -3px;
+            box-shadow: inset 0 -2px 3px #8B4513;
+        }
+        .pe {
+            position: absolute;
+            bottom: -6px;
+            left: -2px;
+            width: 20px;
+            height: 8px;
+            background: #8B4513;
+            border-radius: 30% 30% 50% 50%;
+            display: flex;
+            justify-content: space-around;
+        }
+        .pe::before, .pe::after {
+            content: "";
+            width: 5px;
+            height: 10px;
+            background: #8B4513;
+            border-radius: 40%;
+            transform: rotate(10deg);
+        }
+        .pe::before { transform: rotate(-10deg); }
+        .pe::after { transform: rotate(10deg); }
+        .cauda {
+            position: absolute;
+            width: 40px;
+            height: 35px;
+            background: #B8860B;
+            border-radius: 20% 50% 20% 50%;
+            top: 20px;
+            left: -10px;
+            transform: rotate(15deg);
+            box-shadow: inset -2px -2px 5px #8B4513;
+            z-index: 0;
+        }
+        .cauda::after {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 25px;
+            background: #DAA520;
+            border-radius: 20% 50% 20% 50%;
+            top: 5px;
+            left: 5px;
+            opacity: 0.5;
+        }
+        .sombra {
+            position: absolute;
+            bottom: 15px;
+            left: 30px;
+            width: 140px;
+            height: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            filter: blur(6px);
+            z-index: -1;
+        }
+
+        @keyframes correr {
+            0% { left: -300px; transform: scaleX(1); }
+            20% { left: calc(100% - 200px); transform: scaleX(1); }
+            25% { left: calc(100% - 200px); transform: scaleX(-1); }
+            45% { transform: scaleX(-1); }
+            50% { left: -300px; transform: scaleX(-1); }
+            55% { transform: scaleX(1); }
+            100% { left: -300px; transform: scaleX(1); }
+        }
+        @keyframes baterAsa {
+            0% { transform: rotate(0deg) scaleY(1); }
+            100% { transform: rotate(-30deg) scaleY(0.9); }
+        }
+        @keyframes correrPernas {
+            0% { transform: rotate(20deg) translateY(-2px); height: 48px; }
+            100% { transform: rotate(-20deg) translateY(2px); height: 45px; }
+        }
+
+        /* ===== TELA DE TUTORIAL ===== */
+        #tutorialScreen {
+            text-align: center;
+            color: white;
+        }
+        .tutorial-box {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 500px;
+            color: #1e3a5f;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .tutorial-box h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #b45309;
+        }
+        .tutorial-box p {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+        .tutorial-box .destaque {
+            background: #facc15;
+            color: #0f172a;
+            padding: 5px 15px;
+            border-radius: 40px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .tutorial-box .btn-tutorial {
+            background: #22c55e;
+            border: none;
+            color: #0f172a;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 12px 40px;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #14532d;
+            margin-top: 20px;
+        }
+        .tutorial-box .btn-tutorial:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #14532d;
+        }
     </style>
 </head>
 <body>
 <div class="game-wrapper" id="gameWrapper">
-    <!-- Tela Inicial -->
+    <!-- Tela Inicial ANIMADA (agora com a galinha realista) -->
     <div id="startScreen" class="screen active-screen">
-        <h1>ENCONTRE A SAÍDA</h1>
-        <button class="btn" id="startBtn">▶ JOGAR</button>
+        <!-- Fundo do labirinto -->
+        <div class="labirinto-bg"></div>
+        <div class="overlay"></div>
+
+        <!-- Paredes decorativas -->
+        <div class="parede parede1"></div>
+        <div class="parede parede2"></div>
+        <div class="parede parede3"></div>
+        <div class="parede parede4"></div>
+
+        <!-- Conteúdo principal (título e botão) -->
+        <div class="start-content">
+            <h1>🐔 ENCONTRE A SAÍDA</h1>
+            <p>Ajude a galinha a encontrar a saída do labirinto!</p>
+            <button class="botao-jogo" id="startBtn">▶ JOGAR</button>
+        </div>
+
+        <!-- Galinha realista correndo -->
+        <div class="pista-corrida">
+            <div class="galinha-realista">
+                <div class="corpo"></div>
+                <div class="cauda"></div>
+                <div class="cabeca">
+                    <div class="crista"><span></span><span></span><span></span></div>
+                    <div class="olho"></div>
+                    <div class="bico"></div>
+                    <div class="barbela"></div>
+                </div>
+                <div class="asa"></div>
+                <div class="perna-esquerda"><div class="pe"></div></div>
+                <div class="perna-direita"><div class="pe"></div></div>
+                <div class="sombra"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Tutorial (aparece após clicar em JOGAR) -->
+    <div id="tutorialScreen" class="screen">
+        <div class="tutorial-box">
+            <h2>🐣 Como Jogar</h2>
+            <p><span class="destaque">Objetivo:</span> Leve a galinha (🔴) até a saída verde (🟢) no menor tempo possível.</p>
+            <p><span class="destaque">Controles:</span> Use os botões de direção na tela ou as setas do teclado para se mover. O labirinto só é revelado após o primeiro movimento.</p>
+            <p><span class="destaque">Pontuação:</span> Ganhe estrelas conforme o tempo: ⭐⭐⭐ (rápido), ⭐⭐ (médio) ou ⭐ (lento). Complete níveis para ganhar cristais e desbloquear novos capítulos.</p>
+            <p><span class="destaque">Itens:</span> Compre itens na loja com cristais para te ajudar (ex.: retroceder tempo).</p>
+            <button class="btn-tutorial" id="tutorialContinueBtn">Entendi! Vamos lá</button>
+        </div>
     </div>
 
     <!-- Menu Principal -->
@@ -335,11 +787,8 @@
         </div>
         <div id="mazeGrid" class="maze-grid"></div>
         
-        <!-- Botões de direção (para celular/Xbox) -->
         <div class="direction-pad">
-            <div class="dir-row">
-                <button class="dir-btn" id="moveUp">↑</button>
-            </div>
+            <div class="dir-row"><button class="dir-btn" id="moveUp">↑</button></div>
             <div class="dir-row">
                 <button class="dir-btn" id="moveLeft">←</button>
                 <button class="dir-btn" id="moveDown">↓</button>
@@ -382,7 +831,7 @@
 
 <script>
     (function() {
-        // ---------- CONFIGURAÇÕES ----------
+        // ---------- CONFIGURAÇÕES (mesmo do jogo original) ----------
         const CHAPTERS = 5;
         const LEVELS_PER_CHAPTER = 20;
         const TOTAL_LEVELS = 100;
@@ -436,6 +885,7 @@
         // Elementos DOM
         const screens = {
             start: document.getElementById('startScreen'),
+            tutorial: document.getElementById('tutorialScreen'),
             mainMenu: document.getElementById('mainMenuScreen'),
             career: document.getElementById('careerScreen'),
             levels: document.getElementById('levelsScreen'),
@@ -472,7 +922,7 @@
         const moveLeftBtn = document.getElementById('moveLeft');
         const moveRightBtn = document.getElementById('moveRight');
 
-        // ---------- FUNÇÕES DE ARMAZENAMENTO ----------
+        // ---------- FUNÇÕES DE ARMAZENAMENTO (idênticas) ----------
         function loadProgress() {
             try {
                 const data = JSON.parse(localStorage.getItem('mazeProgressV4'));
@@ -517,17 +967,11 @@
         }
 
         function updateChaptersUnlock() {
-            let totalStars = 0;
             for (let c = 0; c < CHAPTERS; c++) {
-                if (c === 0) {
-                    chapterUnlocked[0] = true;
-                } else {
+                if (c === 0) chapterUnlocked[0] = true;
+                else {
                     const prevChapterStars = getChapterStars(c-1);
-                    if (prevChapterStars >= STAR_THRESHOLDS[c]) {
-                        chapterUnlocked[c] = true;
-                    } else {
-                        chapterUnlocked[c] = false;
-                    }
+                    chapterUnlocked[c] = prevChapterStars >= STAR_THRESHOLDS[c];
                 }
             }
             saveProgress();
@@ -536,13 +980,11 @@
         function getChapterStars(chapterIdx) {
             let sum = 0;
             const start = chapterIdx * LEVELS_PER_CHAPTER;
-            for (let i=0; i<LEVELS_PER_CHAPTER; i++) {
-                sum += careerStars[start + i] || 0;
-            }
+            for (let i=0; i<LEVELS_PER_CHAPTER; i++) sum += careerStars[start + i] || 0;
             return sum;
         }
 
-        // ---------- GERADOR DE LABIRINTO ----------
+        // ---------- GERADOR DE LABIRINTO (determinístico) ----------
         function generateMaze(size, chapter, seed = null) {
             const prob = PATH_PROB[chapter-1] || 0.6;
             let rng = seed ? createSeededRandom(seed) : Math.random;
@@ -622,11 +1064,14 @@
             }
         }
 
-        // ---------- LÓGICA DO JOGO ----------
+        // ---------- LÓGICA DO JOGO (idêntica) ----------
         function startGame(mode, levelIndex, chapter) {
             if (currentGame.timerInterval) clearInterval(currentGame.timerInterval);
             const size = SIZES[chapter-1];
-            const grid = generateMaze(size, chapter, mode==='daily' ? getSeedFromDate() : null);
+            let seed = null;
+            if (mode === 'career') seed = chapter * 1000 + levelIndex;
+            else if (mode === 'daily') seed = getSeedFromDate();
+            const grid = generateMaze(size, chapter, seed);
             const playerPos = {x:0, y:0};
             const endPos = {x:size-1, y:size-1};
             currentGame = {
@@ -704,39 +1149,31 @@
                 if (currentGame.mode === 'career') {
                     const idx = currentGame.levelIndex;
                     const oldStars = careerStars[idx] || 0;
+                    const wasFirstTime = careerBestTimes[idx] === null;
                     if (earnedStars > oldStars) {
                         careerStars[idx] = earnedStars;
                         starBalance += earnedStars - oldStars;
                     }
-                    if (!careerBestTimes[idx] || currentGame.seconds < careerBestTimes[idx]) {
+                    if (wasFirstTime || currentGame.seconds < careerBestTimes[idx]) {
                         careerBestTimes[idx] = currentGame.seconds;
                     }
-                    crystalBalance += CRYSTALS_PER_COMPLETE;
+                    if (wasFirstTime) crystalBalance += CRYSTALS_PER_COMPLETE;
 
-                    if (idx + 1 < TOTAL_LEVELS && !levelUnlocked[idx + 1]) {
-                        levelUnlocked[idx + 1] = true;
-                    }
-
+                    if (idx + 1 < TOTAL_LEVELS && !levelUnlocked[idx + 1]) levelUnlocked[idx + 1] = true;
                     updateChaptersUnlock();
-
-                    if (idx + 1 < TOTAL_LEVELS && levelUnlocked[idx + 1]) {
-                        nextLevelBtn.style.display = 'inline-block';
-                    } else {
-                        nextLevelBtn.style.display = 'none';
-                    }
+                    nextLevelBtn.style.display = (idx + 1 < TOTAL_LEVELS && levelUnlocked[idx + 1]) ? 'inline-block' : 'none';
                 } else if (currentGame.mode === 'daily') {
                     const today = getTodayDateString();
+                    const wasFirstTimeToday = dailyBest.time === null || dailyBest.date !== today;
                     if (!dailyBest.time || currentGame.seconds < dailyBest.time) {
                         dailyBest.time = currentGame.seconds;
                         dailyBest.stars = earnedStars;
                         dailyBest.date = today;
-                        crystalBalance += CRYSTALS_PER_COMPLETE;
                     } else if (earnedStars > dailyBest.stars) {
                         dailyBest.stars = earnedStars;
-                        crystalBalance += CRYSTALS_PER_COMPLETE;
-                    } else {
-                        crystalBalance += CRYSTALS_PER_COMPLETE;
+                        dailyBest.date = today;
                     }
+                    if (wasFirstTimeToday) crystalBalance += CRYSTALS_PER_COMPLETE;
                 }
                 saveProgress();
                 updateStarDisplay();
@@ -766,9 +1203,7 @@
                 if (nextIdx < TOTAL_LEVELS && levelUnlocked[nextIdx]) {
                     const chapter = Math.floor(nextIdx / LEVELS_PER_CHAPTER) + 1;
                     startGame('career', nextIdx, chapter);
-                } else {
-                    alert('Próximo nível não disponível');
-                }
+                } else alert('Próximo nível não disponível');
             }
         }
 
@@ -805,7 +1240,10 @@
         function showScreen(screenId) {
             Object.values(screens).forEach(s => s.classList.remove('active-screen'));
             screens[screenId].classList.add('active-screen');
-            if (screenId === 'mainMenu') updateStarDisplay();
+            if (screenId === 'mainMenu') {
+                dailyDateSpan.textContent = new Date().toLocaleDateString();
+                updateStarDisplay();
+            }
             if (screenId === 'career') renderChapters();
             if (screenId === 'shop') renderShop();
             if (screenId === 'daily') renderDailyScreen();
@@ -854,11 +1292,8 @@
                 const btn = document.createElement('div');
                 btn.className = 'level-btn' + (isUnlocked ? '' : ' locked');
                 btn.innerHTML = `<div>Nível ${i+1}</div><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`;
-                if (isUnlocked) {
-                    btn.onclick = () => startGame('career', levelIdx, chapter);
-                } else {
-                    btn.innerHTML += '<div class="locked-icon">🔒</div>';
-                }
+                if (isUnlocked) btn.onclick = () => startGame('career', levelIdx, chapter);
+                else btn.innerHTML += '<div class="locked-icon">🔒</div>';
                 levelsContainer.appendChild(btn);
             }
             showScreen('levels');
@@ -902,43 +1337,36 @@
                 saveProgress();
                 renderShop();
                 updateStarDisplay();
-            } else {
-                alert('Cristais insuficientes!');
-            }
+            } else alert('Cristais insuficientes!');
         }
 
-        // ---------- EVENT LISTENERS ----------
-        document.getElementById('startBtn').addEventListener('click', () => showScreen('mainMenu'));
-        document.getElementById('dailyBtn').addEventListener('click', () => {
-            renderDailyScreen();
-            showScreen('daily');
+        // ---------- NOVOS EVENT LISTENERS (tutorial) ----------
+        document.getElementById('startBtn').addEventListener('click', () => {
+            showScreen('tutorial'); // Vai para a tela de tutorial
         });
+
+        document.getElementById('tutorialContinueBtn').addEventListener('click', () => {
+            showScreen('mainMenu'); // Do tutorial vai para o menu principal
+        });
+
+        // Demais botões (já existentes)
+        document.getElementById('dailyBtn').addEventListener('click', () => { renderDailyScreen(); showScreen('daily'); });
         document.getElementById('careerBtn').addEventListener('click', () => showScreen('career'));
-        document.getElementById('shopBtn').addEventListener('click', () => {
-            renderShop();
-            showScreen('shop');
-        });
+        document.getElementById('shopBtn').addEventListener('click', () => { renderShop(); showScreen('shop'); });
         document.getElementById('backFromCareer').addEventListener('click', () => showScreen('mainMenu'));
         document.getElementById('backFromLevels').addEventListener('click', () => showScreen('career'));
         document.getElementById('backFromDaily').addEventListener('click', () => showScreen('mainMenu'));
         document.getElementById('backFromShop').addEventListener('click', () => showScreen('mainMenu'));
-        document.getElementById('exitGameBtn').addEventListener('click', () => {
-            clearInterval(currentGame.timerInterval);
-            showScreen('mainMenu');
-        });
+        document.getElementById('exitGameBtn').addEventListener('click', () => { clearInterval(currentGame.timerInterval); showScreen('mainMenu'); });
         document.getElementById('restartGameBtn').addEventListener('click', restartGame);
-        document.getElementById('playDailyBtn').addEventListener('click', () => {
-            startGame('daily', 0, 2);
-        });
+        document.getElementById('playDailyBtn').addEventListener('click', () => startGame('daily', 0, 2));
         document.getElementById('nextLevelBtn').addEventListener('click', goToNextLevel);
 
-        // Botões de movimento
         moveUpBtn.addEventListener('click', () => handleMove(0, -1));
         moveDownBtn.addEventListener('click', () => handleMove(0, 1));
         moveLeftBtn.addEventListener('click', () => handleMove(-1, 0));
         moveRightBtn.addEventListener('click', () => handleMove(1, 0));
 
-        // Teclado (para PC)
         window.addEventListener('keydown', (e) => {
             if (!screens.game.classList.contains('active-screen')) return;
             const key = e.key;
@@ -953,6 +1381,7 @@
         loadProgress();
         updateStarDisplay();
         renderChapters();
+        dailyDateSpan.textContent = new Date().toLocaleDateString();
     })();
 </script>
 </body>
